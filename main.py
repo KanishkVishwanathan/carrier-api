@@ -42,6 +42,8 @@ async def verify_carrier(mc_number: str, x_api_key: str = Header(...)):
 
     carrier = content[0]
 
+    print("CARRIER DATA:", carrier)
+
     if carrier.get("allowedToOperate") != "Y":
         return {"eligible": False, "reason": "Not authorized to operate"}
 
