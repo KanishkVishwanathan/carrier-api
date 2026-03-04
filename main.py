@@ -11,7 +11,6 @@ API_KEY = os.getenv("API_KEY")
 
 app = FastAPI()
 
-# load our loads data once at startup
 with open("loads.json") as f:
     loads = json.load(f)
 
@@ -40,9 +39,7 @@ async def verify_carrier(mc_number: str, x_api_key: str = Header(...)):
     if not content:
         return {"eligible": False, "reason": "Carrier not found"}
 
-    carrier = content[0]
-
-    print("CARRIER DATA:", carrier)
+    carrier = content[0].get("carrier", content[0])
 
     if carrier.get("allowedToOperate") != "Y":
         return {"eligible": False, "reason": "Not authorized to operate"}
