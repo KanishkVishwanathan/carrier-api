@@ -122,7 +122,7 @@ async def call_stats(x_api_key: str = Header(...)):
         except:
             pass
 
-    deal_count = outcomes.get("deal_made", 0)
+    deal_count = outcomes.get("deal_made", 0) + outcomes.get("deal made", 0)
     conversion_rate = round((deal_count / total) * 100, 1) if total > 0 else 0
     avg_rate = round(sum(rates) / len(rates), 0) if rates else 0
 
