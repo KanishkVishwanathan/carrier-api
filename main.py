@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from datetime import datetime
 import httpx
@@ -11,6 +12,14 @@ FMCSA_API_KEY = os.getenv("FMCSA_API_KEY")
 API_KEY = os.getenv("API_KEY")
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 with open("loads.json") as f:
     loads = json.load(f)
