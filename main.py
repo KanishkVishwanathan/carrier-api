@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Header, HTTPException
 from dotenv import load_dotenv
+from datetime import datetime
 import httpx
 import json
 import os
@@ -13,6 +14,18 @@ app = FastAPI()
 
 with open("loads.json") as f:
     loads = json.load(f)
+
+
+def load_calls():
+    if not os.path.exists("calls.json"):
+        return []
+    with open("calls.json") as f:
+        return json.load(f)
+
+
+def save_calls(calls):
+    with open("calls.json", "w") as f:
+        json.dump(calls, f, indent=2)
 
 
 def check_api_key(x_api_key: str = Header(...)):
@@ -63,3 +76,61 @@ async def search_loads(equipment_type: str, x_api_key: str = Header(...)):
         return {"found": False, "loads": []}
 
     return {"found": True, "loads": matches[:2]}
+
+
+@app.post("/save-call")
+async def save_call(call_data: dict, x_api_key: str = Header(...)):
+    check_api_key(x_api_key)
+
+    call_data["timestamp"] = datetime.utcnow().isoformat()
+    calls = load_calls()
+    calls.append(call_data)
+    save_calls(calls)
+
+    return {"saved": True}
+
+
+@app.get("/call-stats")
+async def call_stats(x_api_key: str = Header(...)):
+    check_api_key(x_api_key)
+
+    calls = load_calls()
+    total = len(calls)
+
+    if total == 0:
+        return {"total_calls": 0}
+
+    outcomes = {}
+    sentiments = {}
+    rates = []
+    loadboard_rates = []
+
+    for call in calls:
+        outcome = call.get("call_outcome", "unknown")
+        outcomes[outcome] = outcomes.get(outcome, 0) + 1
+
+        sentiment = call.get("sentiment", "unknown")
+        sentiments[sentiment] = sentiments.get(sentiment, 0) + 1
+
+        try:
+            rates.append(float(call.get("agreed_rate", 0)))
+        except:
+            pass
+
+        try:
+            loadboard_rates.append(float(call.get("loadboard_rate", 0)))
+        except:
+            pass
+
+    deal_count = outcomes.get("deal_made", 0)
+    conversion_rate = round((deal_count / total) * 100, 1) if total > 0 else 0
+    avg_rate = round(sum(rates) / len(rates), 0) if rates else 0
+
+    return {
+        "total_calls": total,
+        "conversion_rate": conversion_rate,
+        "avg_agreed_rate": avg_rate,
+        "outcomes": outcomes,
+        "sentiments": sentiments,
+        "recent_calls": calls[-10:][::-1]
+    }
