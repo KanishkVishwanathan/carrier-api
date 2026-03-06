@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from datetime import datetime
 import httpx
@@ -45,6 +47,10 @@ def check_api_key(x_api_key: str = Header(...)):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+@app.get("/dashboard")
+async def dashboard():
+    return FileResponse("dashboard.html")
 
 
 @app.get("/verify-carrier")
